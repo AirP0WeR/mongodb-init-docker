@@ -1,8 +1,6 @@
 # Use root/example as user/password credentials
 version: '3.1'
-
 services:
-
   mongo:
     container_name: mongo-airp0wer-server
     image: mongo
@@ -15,11 +13,15 @@ services:
       MONGO_INITDB_DATABASE: admin
     ports:
       - "27017:27017"
+    labels:
+      - "docker-volume-backup.archive-pre=/bin/sh -c 'mongodump --username=${MONGO_ROOT_USER} --password=${MONGO_ROOT_PASSWORD} --out=/backups/mongo_db'"
+      - "docker-volume-backup.stop-during-backup=stopservice"
     volumes:
+      - 'backup:/backups'
       - 'mongodata:/data/db'
+      - 'mongodata:/data/configdb'
     networks:
       - db
-
   mongo-express:
     container_name: mongo-airp0wer-express
     image: mongo-express
@@ -39,17 +41,16 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGOEXPRESS_PASSWORD}
     volumes:
       - 'mongodata:/data/db'
-
     networks:
       - db
-
 networks:
     db:
-        driver: bridge
-
+      driver: bridge
 volumes:
   mongodata:
-    driver: local
-
+    name: mongodata
+  backup:
+    name: backup
+    external: true
 
 
